@@ -73,17 +73,14 @@ see URL `https://github.com/redguardtoo/find-by-pinyin-dired'.")
   (setcar args (pinyin-search--pinyin-to-regexp (car args)))
   (apply orig-fun args))
 
-;;;###autoload
-(defun pinyin-search-forward (&optional backword-direction)
-  "Search Chinese forward (backword if BACKWORD-DIRECTION is non-nil) by the first letter of Pinyin (拼音首字母)."
-  (interactive "P")
-  (setq pinyin-search t)
-  (advice-add 'isearch-search-string
-              :around
-              #'pinyin-search--fix-isearch-search-string)
+(defun pinyin-search--setup ()
+  "Add hooks for pinyin searching."
   (add-hook 'isearch-mode-hook
             (lambda ()
               (when pinyin-search
+                (advice-add 'isearch-search-string
+                            :around
+                            #'pinyin-search--fix-isearch-search-string)
                 (setq mode-line-format (cons "拼音搜索 " mode-line-format))
                 (force-mode-line-update)))
             t
@@ -96,13 +93,29 @@ see URL `https://github.com/redguardtoo/find-by-pinyin-dired'.")
                                #'pinyin-search--fix-isearch-search-string))
               (when pinyin-search
                 (setq mode-line-format (delete "拼音搜索 " mode-line-format))
-                (force-mode-line-update))
-              (setq pinyin-search nil))
+                (force-mode-line-update)
+                (setq pinyin-search nil)))
             nil
-            t)
+            t))
+
+;;;###autoload
+(defun pinyin-search-forward (&optional backword-direction)
+  "Search Chinese forward (backword if BACKWORD-DIRECTION is non-nil) by the first letter of Pinyin (拼音首字母)."
+  (interactive "P")
+  (setq pinyin-search t)
+  (pinyin-search--setup)
   (call-interactively (if backword-direction
                           'isearch-backward-regexp
                         'isearch-forward-regexp)))
+
+;;;###autoload
+(defun isearch-toggle-pinyin ()
+  "Toggle Pinyin searching during `isearch' commands."
+  (interactive)
+  (setq pinyin-search (not pinyin-search))
+  (pinyin-search--setup)
+  (isearch-resume isearch-string t nil t isearch-message t))
+
 ;;;###autoload
 (defun pinyin-search-backword ()
   "Search Chinese backword by the first letter of Pinyin (拼音首字母)."
