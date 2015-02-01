@@ -114,7 +114,15 @@ see URL `https://github.com/redguardtoo/find-by-pinyin-dired'.")
   (interactive)
   (setq pinyin-search (not pinyin-search))
   (pinyin-search--setup)
-  (isearch-resume isearch-string t nil t isearch-message t))
+  (isearch-resume isearch-string
+                  (if pinyin-search
+                      ;; Pinyin search only works with regexp
+                      t
+                    isearch-regexp)
+                  isearch-word
+                  isearch-forward
+                  isearch-message
+                  isearch-case-fold-search))
 
 ;;;###autoload
 (defun pinyin-search-backword ()
